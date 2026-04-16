@@ -1,0 +1,71 @@
+# Ignore vendor (managed by Composer)
+vendor/
+
+# Ignore Drupal core (downloaded via Composer)
+web/core/
+
+# Ignore contrib modules/themes/profiles
+web/modules/contrib/
+web/themes/contrib/
+web/profiles/contrib/
+
+# Ignore libraries (if using composer/installers)
+web/libraries/
+
+# Ignore files directory (user uploads)
+web/sites/*/files/
+!web/sites/default/files/.htaccess
+
+# Ignore private files (if configured)
+private/
+
+# Ignore settings (environment-specific)
+web/sites/*/settings.php
+web/sites/*/settings.local.php
+web/sites/*/services.yml
+
+# Keep default settings file
+!web/sites/default/default.settings.php
+
+# Ignore config sync if environment-specific
+# (optional – include if using CI/CD strategy)
+# config/sync/
+
+# Ignore temporary directories
+tmp/
+temp/
+
+# Ignore logs
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+
+# Ignore Node modules (if using frontend build tools)
+node_modules/
+
+# Ignore build artifacts
+dist/
+build/
+
+# Ignore PHPUnit cache
+.phpunit.result.cache
+
+# Ignore composer.lock? (IMPORTANT NOTE BELOW)
+# composer.lock
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore backup files
+*.sql
+*.gz
+*.tar
+*.zip
+.ddev/
