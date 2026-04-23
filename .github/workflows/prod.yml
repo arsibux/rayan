@@ -17,7 +17,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          php-version: 8.3
           extensions: mbstring, xml, curl, gd
           coverage: none
 
@@ -78,32 +78,26 @@ jobs:
 
             cd /home/alrawhfj/public_html
 
+            echo "Installing dependencies"
+            php /usr/bin/composer install --optimize-autoloader --no-interaction
+
             echo "Enable maintenance mode"
             ./vendor/bin/drush sset system.maintenance_mode 1
             ./vendor/bin/drush cr
 
             echo "Updating code from Git"
-            git fetch origin stage
-            git reset --hard origin/stage
+            git fetch origin main
+            git reset --hard origin/main
             git clean -fd \
               -e web/sites/default/files \
               -e web/sites/default/settings.php \
               -e web/sites/default/services.yml \
               -e web/sites/default/services.local.yml
 
-            echo "Installing dependencies"
-            php84 /usr/bin/composer install --optimize-autoloader --no-interaction
-
             echo "Running Drupal updates"
             ./vendor/bin/drush updb -y
             ./vendor/bin/drush cim -y
             ./vendor/bin/drush cr
-
-            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_entity"
-            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_render"
-            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_data"
-            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_dynamic_page_cache"
-            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_config"
 
             echo "Disable maintenance mode"
             ./vendor/bin/drush sset system.maintenance_mode 0
