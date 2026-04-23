@@ -55,7 +55,7 @@ jobs:
     needs: ci
     if: github.ref == 'refs/heads/stage'
     runs-on: ubuntu-latest
-    environment: stage
+    environment: main
 
     steps:
       - name: Download Build Artifact
