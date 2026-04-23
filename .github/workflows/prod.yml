@@ -1,0 +1,110 @@
+name: Drupal CI/CD
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: mbstring, xml, curl, gd
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Validate Composer
+        run: composer validate
+
+      # Optional QA tools (enable later if needed)
+      # - name: PHPStan
+      #   run: ./vendor/bin/phpstan analyse web/modules/custom
+
+      # - name: PHPCS
+      #   run: ./vendor/bin/phpcs web/modules/custom
+
+      # - name: PHPUnit
+      #   run: ./vendor/bin/phpunit
+
+      - name: Build Artifact
+        run: |
+          tar --exclude=.git \
+              --exclude=.github \
+              --exclude=node_modules \
+              -czf build.tar.gz . || true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drupal-build
+          path: build.tar.gz
+
+
+  deploy-prod:
+    needs: ci
+    if: github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+    environment: stage
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: drupal-build
+
+      - name: Extract Artifact
+        run: tar -xzf build.tar.gz
+
+      - name: Deploy to Stage Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGE_HOST }}
+          username: ${{ secrets.STAGE_USER }}
+          key: ${{ secrets.STAGE_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            cd /home/alrawhfj/public_html
+
+            echo "Enable maintenance mode"
+            ./vendor/bin/drush sset system.maintenance_mode 1
+            ./vendor/bin/drush cr
+
+            echo "Updating code from Git"
+            git fetch origin stage
+            git reset --hard origin/stage
+            git clean -fd \
+              -e web/sites/default/files \
+              -e web/sites/default/settings.php \
+              -e web/sites/default/services.yml \
+              -e web/sites/default/services.local.yml
+
+            echo "Installing dependencies"
+            php84 /usr/bin/composer install --optimize-autoloader --no-interaction
+
+            echo "Running Drupal updates"
+            ./vendor/bin/drush updb -y
+            ./vendor/bin/drush cim -y
+            ./vendor/bin/drush cr
+
+            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_entity"
+            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_render"
+            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_data"
+            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_dynamic_page_cache"
+            ./vendor/drush/drush/drush sqlq "TRUNCATE cache_config"
+
+            echo "Disable maintenance mode"
+            ./vendor/bin/drush sset system.maintenance_mode 0
+            ./vendor/bin/drush cr
