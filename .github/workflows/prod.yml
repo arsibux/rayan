@@ -78,9 +78,6 @@ jobs:
 
             cd /home/alrawhfj/public_html/rayan
 
-            echo "Installing dependencies"
-            composer install --optimize-autoloader --no-interaction
-
             echo "Enable maintenance mode"
             ./vendor/bin/drush sset system.maintenance_mode 1
             ./vendor/bin/drush cr
@@ -93,6 +90,9 @@ jobs:
               -e web/sites/default/settings.php \
               -e web/sites/default/services.yml \
               -e web/sites/default/services.local.yml
+
+            echo "Installing dependencies"
+            composer install --optimize-autoloader --no-interaction
 
             echo "Running Drupal updates"
             ./vendor/bin/drush updb -y
