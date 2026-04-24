@@ -76,7 +76,7 @@ jobs:
           script: |
             set -e
 
-            cd /home/alrawhfj/public_html
+            cd /home/alrawhfj/public_html/rayan
 
             echo "Installing dependencies"
             composer install --optimize-autoloader --no-interaction
